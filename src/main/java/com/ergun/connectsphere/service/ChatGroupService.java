@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,13 @@ public class ChatGroupService {
         ChatGroupEntity savedGroup = chatGroupRepository.save(group);
 
         return ChatGroupResponseDto.fromEntity(savedGroup);
+    }
+
+    public List<ChatGroupResponseDto> getAllGroups() {
+        return chatGroupRepository.findAll()
+                .stream()
+                .map(ChatGroupResponseDto::fromEntity)
+                .toList();
     }
 
     public ChatGroupResponseDto addMemberToGroup(Long groupId, Long userId) {

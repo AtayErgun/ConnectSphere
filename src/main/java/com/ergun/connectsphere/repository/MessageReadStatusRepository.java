@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface MessageReadStatusRepository extends JpaRepository<MessageReadStatusEntity,Long> {
-    Optional<MessageReadStatusEntity> findByMessageAndUser(MessageEntity message, UserEntity user);
+    boolean existsByMessageAndUser(MessageEntity message, UserEntity user);
 
 }
