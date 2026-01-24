@@ -1,12 +1,15 @@
 package com.ergun.connectsphere.controller;
 
 
+import com.ergun.connectsphere.MessageType;
 import com.ergun.connectsphere.dto.MessageResponseDto;
 import com.ergun.connectsphere.dto.MessageSendRequestDto;
+import com.ergun.connectsphere.service.FileService;
 import com.ergun.connectsphere.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,6 +20,8 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService messageService;
+    private final FileService fileService;
+
 
     @PostMapping
     public ResponseEntity<MessageResponseDto> sendMessage(
@@ -41,6 +46,7 @@ public class MessageController {
                 messageService.getMessagesByGroup(groupId)
         );
     }
+
     @PutMapping("/{messageId}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable Long messageId,
@@ -49,6 +55,27 @@ public class MessageController {
         // Mesajı okundu olarak işaretle
         messageService.markMessageAsRead(messageId, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/image")
+    public MessageResponseDto sendImageMessage(
+            @RequestParam MultipartFile file,
+            @RequestParam Long senderId,
+            @RequestParam Long groupId,
+            @RequestParam(value = "content", required = false) String content
+    ) {
+
+        String fileName = fileService.saveFile(file);
+
+        String imageUrl = "http://localhost:8080/uploads/" + fileName;
+
+        return messageService.sendMessage(
+                senderId,
+                groupId,
+                content,
+                MessageType.IMAGE,
+                imageUrl
+        );
     }
 
 }
