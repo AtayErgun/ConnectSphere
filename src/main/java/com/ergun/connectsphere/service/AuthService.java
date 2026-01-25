@@ -5,18 +5,21 @@ import com.ergun.connectsphere.dto.AuthLoginRequestDto;
 import com.ergun.connectsphere.dto.AuthRegisterRequestDto;
 import com.ergun.connectsphere.dto.AuthResponseDto;
 import com.ergun.connectsphere.entity.UserEntity;
+import com.ergun.connectsphere.repository.ChatGroupRepository;
 import com.ergun.connectsphere.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final ChatGroupRepository chatGroupRepository; // Yeni eklendi
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional // Hem kullanıcıyı kaydedip hem gruba eklediğimiz için önemli
     public AuthResponseDto register(AuthRegisterRequestDto request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -34,6 +37,14 @@ public class AuthService {
                 .build();
 
         UserEntity savedUser = userRepository.save(user);
+
+        // --- OTOMATİK GRUBA EKLEME KISMI ---
+        // ID'si 1L olan "Genel Sohbet" grubunu bul ve kullanıcıyı içine at
+        chatGroupRepository.findById(1L).ifPresent(group -> {
+            group.getMembers().add(savedUser);
+            chatGroupRepository.save(group);
+        });
+        // -----------------------------------
 
         return AuthResponseDto.fromEntity(savedUser);
     }

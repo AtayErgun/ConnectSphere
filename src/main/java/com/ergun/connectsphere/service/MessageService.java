@@ -4,14 +4,8 @@ package com.ergun.connectsphere.service;
 import com.ergun.connectsphere.MessageType;
 import com.ergun.connectsphere.dto.MessageReadEventDto;
 import com.ergun.connectsphere.dto.MessageResponseDto;
-import com.ergun.connectsphere.entity.ChatGroupEntity;
-import com.ergun.connectsphere.entity.MessageEntity;
-import com.ergun.connectsphere.entity.MessageReadStatusEntity;
-import com.ergun.connectsphere.entity.UserEntity;
-import com.ergun.connectsphere.repository.ChatGroupRepository;
-import com.ergun.connectsphere.repository.MessageReadStatusRepository;
-import com.ergun.connectsphere.repository.MessageRepository;
-import com.ergun.connectsphere.repository.UserRepository;
+import com.ergun.connectsphere.entity.*;
+import com.ergun.connectsphere.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -19,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 @Service
@@ -30,7 +25,7 @@ public class MessageService {
     private final ChatGroupRepository chatGroupRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final MessageReadStatusRepository messageReadStatusRepository;
-
+    private final MessageReactionRepository reactionRepository;
 
     public MessageResponseDto sendMessage(
             Long senderId,
@@ -78,6 +73,49 @@ public class MessageService {
                 .toList();
     }
 
+    public long getUnreadCount(Long groupId, Long userId) {
+        return messageRepository.countUnreadMessages(groupId, userId);
+    }
+
+    public void addReaction(Long messageId, Long userId, String emoji) {
+
+        MessageEntity message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Optional<MessageReactionEntity> existing =
+                reactionRepository.findByMessageIdAndUserIdAndEmojiCode(
+                        messageId, userId, emoji
+                );
+
+        String type;
+
+        if (existing.isPresent()) {
+            reactionRepository.delete(existing.get());
+            type = "REMOVE";
+        } else {
+            MessageReactionEntity reaction = MessageReactionEntity.builder()
+                    .message(message)
+                    .user(user)
+                    .emojiCode(emoji)
+                    .build();
+            reactionRepository.save(reaction);
+            type = "ADD";
+        }
+
+        messagingTemplate.convertAndSend(
+                "/topic/group/" + message.getGroup().getId() + "/reactions",
+                Map.of(
+                        "messageId", messageId,
+                        "userId", userId,
+                        "emoji", emoji,
+                        "type", type
+                )
+        );
+    }
+
     public void markMessageAsRead(Long messageId, Long userId) {
 
         MessageEntity message = messageRepository.findById(messageId)
@@ -106,6 +144,54 @@ public class MessageService {
         messagingTemplate.convertAndSend(
                 "/topic/group/" + message.getGroup().getId() + "/reads",
                 new MessageReadEventDto(messageId, userId)
+        );
+    }
+
+    public void editMessage(Long messageId, Long userId, String newContent) {
+
+        MessageEntity message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!message.getSender().getId().equals(userId)) {
+            throw new RuntimeException("You can only edit your own message");
+        }
+
+        if (message.isDeleted()) {
+            throw new RuntimeException("Deleted message cannot be edited");
+        }
+
+        message.setContent(newContent);
+        messageRepository.save(message);
+
+        messagingTemplate.convertAndSend(
+                "/topic/group/" + message.getGroup().getId() + "/updates",
+                Map.of(
+                        "messageId", messageId,
+                        "content", newContent,
+                        "type", "EDIT"
+                )
+        );
+    }
+
+    // 🗑️ DELETE MESSAGE (Soft delete)
+    public void deleteMessage(Long messageId, Long userId) {
+
+        MessageEntity message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!message.getSender().getId().equals(userId)) {
+            throw new RuntimeException("You can only delete your own message");
+        }
+
+        message.setDeleted(true);
+        messageRepository.save(message);
+
+        messagingTemplate.convertAndSend(
+                "/topic/group/" + message.getGroup().getId() + "/updates",
+                Map.of(
+                        "messageId", messageId,
+                        "type", "DELETE"
+                )
         );
     }
 }

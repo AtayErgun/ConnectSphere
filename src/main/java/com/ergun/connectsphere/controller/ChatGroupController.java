@@ -3,6 +3,7 @@ package com.ergun.connectsphere.controller;
 
 import com.ergun.connectsphere.dto.ChatGroupCreateRequestDto;
 import com.ergun.connectsphere.dto.ChatGroupResponseDto;
+import com.ergun.connectsphere.dto.ChatGroupSummaryDto;
 import com.ergun.connectsphere.service.ChatGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -38,5 +39,12 @@ public class ChatGroupController {
     @GetMapping
     public ResponseEntity<List<ChatGroupResponseDto>> getAllGroups() {
         return ResponseEntity.ok(chatGroupService.getAllGroups());
+    }
+
+    @GetMapping("/summary")
+    public List<ChatGroupSummaryDto> getGroupSummaries(
+            @RequestParam Long userId
+    ) {
+        return chatGroupService.getGroupSummaries(userId);
     }
 }

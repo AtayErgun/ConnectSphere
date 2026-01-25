@@ -78,4 +78,31 @@ public class MessageController {
         );
     }
 
+    @PostMapping("/{id}/react")
+    public void reactToMessage(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestParam String emoji
+    ) {
+        messageService.addReaction(id, userId, emoji);
+    }
+
+    // ✏️ EDIT
+    @PutMapping("/{id}")
+    public void editMessage(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestParam String content
+    ) {
+        messageService.editMessage(id, userId, content);
+    }
+
+    // 🗑️ DELETE
+    @DeleteMapping("/{id}")
+    public void deleteMessage(
+            @PathVariable Long id,
+            @RequestParam Long userId
+    ) {
+        messageService.deleteMessage(id, userId);
+    }
 }

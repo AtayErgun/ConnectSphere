@@ -3,6 +3,7 @@ package com.ergun.connectsphere.service;
 
 import com.ergun.connectsphere.dto.ChatGroupCreateRequestDto;
 import com.ergun.connectsphere.dto.ChatGroupResponseDto;
+import com.ergun.connectsphere.dto.ChatGroupSummaryDto;
 import com.ergun.connectsphere.entity.ChatGroupEntity;
 import com.ergun.connectsphere.entity.UserEntity;
 import com.ergun.connectsphere.repository.ChatGroupRepository;
@@ -18,6 +19,7 @@ import java.util.List;
 public class ChatGroupService {
 
     private final ChatGroupRepository chatGroupRepository;
+    private final MessageService messageService;
     private final UserRepository userRepository;
 
     public ChatGroupResponseDto createGroup(ChatGroupCreateRequestDto request) {
@@ -61,5 +63,23 @@ public class ChatGroupService {
         ChatGroupEntity updatedGroup = chatGroupRepository.save(group);
 
         return ChatGroupResponseDto.fromEntity(updatedGroup);
+    }
+
+    public List<ChatGroupSummaryDto> getGroupSummaries(Long userId) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return chatGroupRepository.findByMembersContaining(user)
+                .stream()
+                .map(group -> ChatGroupSummaryDto.builder()
+                        .groupId(group.getId())
+                        .groupName(group.getName())
+                        .unreadCount(
+                                messageService.getUnreadCount(group.getId(), userId)
+                        )
+                        .build()
+                )
+                .toList();
     }
 }
