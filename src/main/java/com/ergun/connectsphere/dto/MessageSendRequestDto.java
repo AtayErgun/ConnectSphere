@@ -11,4 +11,5 @@ public class MessageSendRequestDto {
     private String content;
     private MessageType messageType;
     private String attachmentUrl;
+    private Long parentMessageId;
 }

@@ -46,6 +46,10 @@ public class MessageEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MessageType messageType;
-
     private String attachmentUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_message_id")
+    private MessageEntity parentMessage;
+
 }

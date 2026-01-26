@@ -32,13 +32,21 @@ public class MessageService {
             Long groupId,
             String content,
             MessageType messageType,
-            String attachmentUrl
+            String attachmentUrl,
+            Long parentMessageId
     ) {
         UserEntity sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
 
         ChatGroupEntity group = chatGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        MessageEntity parentMessage = null;
+
+        if (parentMessageId != null) {
+            parentMessage = messageRepository.findById(parentMessageId)
+                    .orElseThrow(() -> new RuntimeException("Parent message not found"));
+        }
 
         MessageEntity message = MessageEntity.builder()
                 .sender(sender)
@@ -47,6 +55,7 @@ public class MessageService {
                 .messageType(messageType)
                 .attachmentUrl(attachmentUrl)
                 .timestamp(LocalDateTime.now())
+                .parentMessage(parentMessage)
                 .build();
 
         MessageEntity savedMessage = messageRepository.save(message);

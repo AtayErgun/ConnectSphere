@@ -33,7 +33,8 @@ public class MessageController {
                         request.getGroupId(),
                         request.getContent(),
                         request.getMessageType(),
-                        request.getAttachmentUrl()
+                        request.getAttachmentUrl(),
+                        request.getParentMessageId()
                 )
         );
     }
@@ -62,19 +63,18 @@ public class MessageController {
             @RequestParam MultipartFile file,
             @RequestParam Long senderId,
             @RequestParam Long groupId,
-            @RequestParam(value = "content", required = false) String content
+            @RequestParam(required = false) Long parentMessageId
     ) {
-
         String fileName = fileService.saveFile(file);
-
         String imageUrl = "http://localhost:8080/uploads/" + fileName;
 
         return messageService.sendMessage(
                 senderId,
                 groupId,
-                content,
+                null,
                 MessageType.IMAGE,
-                imageUrl
+                imageUrl,
+                parentMessageId
         );
     }
 

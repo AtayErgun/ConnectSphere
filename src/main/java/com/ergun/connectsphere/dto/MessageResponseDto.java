@@ -22,31 +22,53 @@ public class MessageResponseDto {
     private MessageType messageType;
     private String attachmentUrl;
     private LocalDateTime timestamp;
+
     private Long senderId;
     private String senderUsername;
+
+    // 🔁 Reply info
+    private Long parentMessageId;
+    private String parentMessageContent;
+    private String parentMessageSender;
+
     private boolean isDeleted;
     private List<ReactionDto> reactions;
 
     public static MessageResponseDto fromEntity(MessageEntity message) {
+
+        MessageEntity parent = message.getParentMessage();
+
         return MessageResponseDto.builder()
                 .id(message.getId())
-                .content(message.getContent())
+                .content(message.isDeleted() ? null : message.getContent())
                 .messageType(message.getMessageType())
                 .attachmentUrl(message.getAttachmentUrl())
                 .timestamp(message.getTimestamp())
                 .senderId(message.getSender().getId())
-                .isDeleted(message.isDeleted())
                 .senderUsername(message.getSender().getUsername())
-                // 🛡️ NULL KONTROLÜ EKLENDİ: Eğer reactions listesi null ise hata vermez, boş liste döner.
+
+                // 🔁 Reply mapping
+                .parentMessageId(parent != null ? parent.getId() : null)
+                .parentMessageContent(
+                        parent != null && !parent.isDeleted()
+                                ? parent.getContent()
+                                : null
+                )
+                .parentMessageSender(
+                        parent != null
+                                ? parent.getSender().getUsername()
+                                : null
+                )
+
+                .isDeleted(message.isDeleted())
                 .reactions(
-                        message.getReactions() != null ?
-                                message.getReactions().stream()
-                                        .map(r -> ReactionDto.builder()
-                                                .userId(r.getUser().getId())
-                                                .emoji(r.getEmojiCode())
-                                                .build())
-                                        .toList()
-                                : new ArrayList<>()
+                        message.getReactions()
+                                .stream()
+                                .map(r -> ReactionDto.builder()
+                                        .userId(r.getUser().getId())
+                                        .emoji(r.getEmojiCode())
+                                        .build())
+                                .toList()
                 )
                 .build();
     }
