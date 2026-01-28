@@ -7,6 +7,7 @@ import com.ergun.connectsphere.dto.AuthResponseDto;
 import com.ergun.connectsphere.entity.UserEntity;
 import com.ergun.connectsphere.repository.ChatGroupRepository;
 import com.ergun.connectsphere.repository.UserRepository;
+import com.ergun.connectsphere.security.JwtProvider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final ChatGroupRepository chatGroupRepository; // Yeni eklendi
     private final PasswordEncoder passwordEncoder;
+    private final JwtProvider jwtProvider;
+
 
     @Transactional // Hem kullanıcıyı kaydedip hem gruba eklediğimiz için önemli
     public AuthResponseDto register(AuthRegisterRequestDto request) {
@@ -50,14 +53,17 @@ public class AuthService {
     }
 
     public AuthResponseDto login(AuthLoginRequestDto request) {
-
         UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new RuntimeException("Hatalı şifre");
         }
 
-        return AuthResponseDto.fromEntity(user);
+        String token = jwtProvider.generateToken(user.getId(), user.getUsername());
+
+        AuthResponseDto response = AuthResponseDto.fromEntity(user);
+        response.setAccessToken(token); // Token'ı içine koyuyoruz
+        return response;
     }
 }

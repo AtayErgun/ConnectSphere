@@ -44,4 +44,7 @@ public class PresenceService {
     public Set<Long> getOnlineUsers() {
         return onlineUsers;
     }
+    public Set<Long> getOnlineUserIds() {
+        return onlineUsers;
+    }
 }

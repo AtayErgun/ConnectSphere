@@ -63,7 +63,8 @@ public class MessageController {
             @RequestParam MultipartFile file,
             @RequestParam Long senderId,
             @RequestParam Long groupId,
-            @RequestParam(required = false) Long parentMessageId
+            @RequestParam(value = "content", required = false) String content, // 👈 METİN İÇİN BU ŞART
+            @RequestParam(value = "parentMessageId", required = false) Long parentMessageId // 👈 YANIT İÇİN BU ŞART
     ) {
         String fileName = fileService.saveFile(file);
         String imageUrl = "http://localhost:8080/uploads/" + fileName;
@@ -71,7 +72,7 @@ public class MessageController {
         return messageService.sendMessage(
                 senderId,
                 groupId,
-                null,
+                content,
                 MessageType.IMAGE,
                 imageUrl,
                 parentMessageId

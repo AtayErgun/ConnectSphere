@@ -13,3 +13,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
+jwt:
+  secret: connectSphereSuperSecretKeyConnectSphere12345
+  expiration: 86400000 # 1 gün
