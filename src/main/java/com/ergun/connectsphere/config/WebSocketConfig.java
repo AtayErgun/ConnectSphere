@@ -29,8 +29,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic")
-                .setTaskScheduler(heartbeatTaskScheduler()) // İsim güncellendi
-                .setHeartbeatValue(new long[]{10000, 10000});
+                .setHeartbeatValue(new long[]{5000, 5000}) // 5 saniyede bir "buradayım" de
+                .setTaskScheduler(heartbeatTaskScheduler());
 
         registry.setApplicationDestinationPrefixes("/app");
     }

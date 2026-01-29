@@ -106,4 +106,10 @@ public class MessageController {
     ) {
         messageService.deleteMessage(id, userId);
     }
+
+    @PutMapping("/read-all/{groupId}")
+    public ResponseEntity<Void> markAllAsRead(@PathVariable Long groupId, @RequestParam Long userId) {
+        messageService.markAllMessagesInGroupAsRead(groupId, userId);
+        return ResponseEntity.ok().build();
+    }
 }

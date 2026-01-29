@@ -6,6 +6,7 @@ import com.ergun.connectsphere.dto.MessageReadEventDto;
 import com.ergun.connectsphere.dto.MessageResponseDto;
 import com.ergun.connectsphere.entity.*;
 import com.ergun.connectsphere.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -155,6 +156,37 @@ public class MessageService {
                 new MessageReadEventDto(messageId, userId)
         );
     }
+
+    @Transactional
+    public void markAllMessagesInGroupAsRead(Long groupId, Long userId) {
+        // 1. Grubu ve Kullanıcıyı bul
+        ChatGroupEntity group = chatGroupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Bu gruptaki, kullanıcının henüz okumadığı mesajları bul
+        // (Repository'ye özel bir sorgu da yazılabilir ama basitlik için böyle yapalım)
+        List<MessageEntity> unreadMessages = messageRepository.findByGroupAndSenderNot(group, user)
+                .stream()
+                .filter(m -> !messageReadStatusRepository.existsByMessageAndUser(m, user))
+                .toList();
+
+        // 3. Hepsini okundu olarak işaretle
+        unreadMessages.forEach(msg -> {
+            MessageReadStatusEntity status = MessageReadStatusEntity.builder()
+                    .message(msg)
+                    .user(user)
+                    .readAt(LocalDateTime.now())
+                    .build();
+            messageReadStatusRepository.save(status);
+
+            // WebSocket ile bu mesajın okundu bilgisini yayınla
+            messagingTemplate.convertAndSend("/topic/group/" + groupId + "/reads",
+                    new MessageReadEventDto(msg.getId(), userId));
+        });
+    }
+
 
     public void editMessage(Long messageId, Long userId, String newContent) {
 

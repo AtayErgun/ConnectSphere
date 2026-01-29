@@ -48,4 +48,12 @@ public class UserService {
                 .map(UserResponseDto::fromEntity)
                 .toList();
     }
+
+    public List<UserResponseDto> searchGlobalUsers(String query) {
+        return userRepository
+                .findByUsernameContainingIgnoreCase(query)
+                .stream()
+                .map(UserResponseDto::fromEntity)
+                .toList();
+    }
 }

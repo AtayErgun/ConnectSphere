@@ -2,6 +2,7 @@ package com.ergun.connectsphere.repository;
 
 import com.ergun.connectsphere.entity.ChatGroupEntity;
 import com.ergun.connectsphere.entity.MessageEntity;
+import com.ergun.connectsphere.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +11,7 @@ import java.util.List;
 
 public interface MessageRepository extends JpaRepository<MessageEntity,Long> {
     List<MessageEntity> findByGroupOrderByTimestampAsc(ChatGroupEntity group);
+    List<MessageEntity> findByGroupAndSenderNot(ChatGroupEntity group, UserEntity sender);
 
     @Query("""
         SELECT COUNT(m)

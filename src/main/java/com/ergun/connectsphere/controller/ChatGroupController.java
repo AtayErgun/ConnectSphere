@@ -4,7 +4,9 @@ package com.ergun.connectsphere.controller;
 import com.ergun.connectsphere.dto.ChatGroupCreateRequestDto;
 import com.ergun.connectsphere.dto.ChatGroupResponseDto;
 import com.ergun.connectsphere.dto.ChatGroupSummaryDto;
+import com.ergun.connectsphere.dto.UserResponseDto;
 import com.ergun.connectsphere.service.ChatGroupService;
+import com.ergun.connectsphere.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ import java.util.List;
 public class ChatGroupController {
 
     private final ChatGroupService chatGroupService;
+    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<ChatGroupResponseDto> createGroup(
@@ -46,5 +49,15 @@ public class ChatGroupController {
             @RequestParam Long userId
     ) {
         return chatGroupService.getGroupSummaries(userId);
+    }
+
+    @PostMapping("/dm")
+    public ResponseEntity<ChatGroupResponseDto> startDM(@RequestParam Long user1Id, @RequestParam Long user2Id) {
+        return ResponseEntity.ok(chatGroupService.createOrGetPrivateChat(user1Id, user2Id));
+    }
+
+    @GetMapping("/search-users")
+    public List<UserResponseDto> searchUsers(@RequestParam String query) {
+        return userService.searchGlobalUsers(query);
     }
 }
