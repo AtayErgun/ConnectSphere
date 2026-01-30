@@ -46,7 +46,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // React adresi
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://connectsphere-ui-fawn.vercel.app" // 👈 Vercel'in sana verdiği gerçek linki buraya yapıştır
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
