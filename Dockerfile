@@ -4,11 +4,10 @@ WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-# 2. Aşama: Uygulamayı çalıştır (Güncel ve stabil JRE)
-FROM eclipse-temurin:17-jdk-jammy
+# 2. Aşama: Uygulamayı çalıştır (JRE sürümü daha hafif ve güvenlidir)
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
-# 🚨 DİKKAT: target altındaki JAR isminin tam olarak 'ConnectSphere-0.0.1-SNAPSHOT.jar'
-# olduğundan emin ol. pom.xml'deki artifactId ve version'a göre değişebilir.
-COPY --from=build /app/target/ConnectSphere-0.0.1-SNAPSHOT.jar app.jar
+# JAR ismini garantiye almak için wildcard (*) kullanıyoruz
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
