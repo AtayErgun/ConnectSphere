@@ -67,8 +67,7 @@ public class MessageController {
             @RequestParam(value = "parentMessageId", required = false) Long parentMessageId // 👈 YANIT İÇİN BU ŞART
     ) {
         String fileName = fileService.saveFile(file);
-        String imageUrl = "http://localhost:8080/uploads/" + fileName;
-
+        String imageUrl = fileService.saveFile(file, "messages");
         return messageService.sendMessage(
                 senderId,
                 groupId,

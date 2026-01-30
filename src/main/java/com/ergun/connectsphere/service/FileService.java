@@ -1,5 +1,8 @@
 package com.ergun.connectsphere.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,54 +11,47 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-
 @Service
 public class FileService {
 
-    private static final String BASE_UPLOAD_DIR = "uploads/";
+    private final Cloudinary cloudinary;
 
-    // 1. ESKİ KODUN ÇALIŞMASI İÇİN (Geriye dönük uyumluluk)
-    // Mesaj resimleri direkt uploads/ içine gitmeye devam eder.
-    public String saveFile(MultipartFile file) {
-        return saveFile(file, ""); // Boş subDir ile çağırıyoruz
+    // Bilgileri application.yml'den çekip Cloudinary bağlantısını kuruyoruz
+    public FileService(
+            @Value("${cloudinary.cloud-name}") String cloudName,
+            @Value("${cloudinary.api-key}") String apiKey,
+            @Value("${cloudinary.api-secret}") String apiSecret) {
+
+        this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret));
     }
 
-    // 2. YENİ METOD: ALT KLASÖR DESTEĞİ
-    // Profil fotoları için "avatars" parametresi gönderilecek.
+    // Bu metod hem resim yükler hem de bize internet URL'ini döner
     public String saveFile(MultipartFile file, String subDir) {
         if (file.isEmpty()) {
-            throw new RuntimeException("File is empty");
+            throw new RuntimeException("Dosya boş!");
         }
 
         try {
-            // Hedef yolu belirle: uploads/ + altKlasör (örn: avatars)
-            Path uploadPath = Paths.get(BASE_UPLOAD_DIR, subDir);
+            // Dosyayı Cloudinary'ye gönderiyoruz
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                    ObjectUtils.asMap("folder", "connectsphere/" + subDir));
 
-            // Eğer klasör yoksa (uploads/avatars gibi) otomatik oluşturur
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // Dosya uzantısını al (.jpg, .png vb.)
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-
-            // Benzersiz dosya adı oluştur
-            String fileName = UUID.randomUUID().toString() + extension;
-
-            // Dosyayı fiziksel olarak kaydet
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return fileName;
+            // Yüklenen resmin internet adresini (URL) döndürüyoruz
+            return uploadResult.get("secure_url").toString();
 
         } catch (IOException e) {
-            throw new RuntimeException("File upload failed", e);
+            throw new RuntimeException("Cloudinary yükleme hatası!", e);
         }
+    }
+
+    // Eski metodların bozulmaması için (default klasör: general)
+    public String saveFile(MultipartFile file) {
+        return saveFile(file, "general");
     }
 }

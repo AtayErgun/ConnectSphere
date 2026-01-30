@@ -43,10 +43,10 @@ public class AuthService {
 
         // --- OTOMATİK GRUBA EKLEME KISMI ---
         // ID'si 1L olan "Genel Sohbet" grubunu bul ve kullanıcıyı içine at
-        chatGroupRepository.findById(1L).ifPresent(group -> {
-            group.getMembers().add(savedUser);
-            chatGroupRepository.save(group);
-        });
+       // chatGroupRepository.findById(1L).ifPresent(group -> {
+         //   group.getMembers().add(savedUser);
+           // chatGroupRepository.save(group);
+        //});
         // -----------------------------------
 
         return AuthResponseDto.fromEntity(savedUser);

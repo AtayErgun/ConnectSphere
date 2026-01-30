@@ -77,7 +77,7 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String fileName = fileService.saveFile(file, "avatars");
-        String avatarUrl = "http://localhost:8080/uploads/avatars/" + fileName;
+        String avatarUrl = fileService.saveFile(file, "avatars");
 
         user.setAvatarUrl(avatarUrl);
         UserEntity updated = userRepository.save(user);
