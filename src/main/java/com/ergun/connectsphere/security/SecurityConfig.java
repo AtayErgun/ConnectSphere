@@ -46,17 +46,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOrigins(List.of(
-//                "http://localhost:5173",
-//                "https://connectsphere-ui-fawn.vercel.app",
-//                "https://connectsphere-brgbxmr3u-atayergun29-6035s-projects.vercel.app"// 👈 Vercel'in sana verdiği gerçek linki buraya yapıştır
-//        ));
-        configuration.setAllowedOriginPatterns(List.of("*"));
 
+        // 🚨 BURASI ÇOK KRİTİK: Vercel'in tüm alt domainlerine izin veriyoruz
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "https://*.vercel.app" // Vercel'den gelen her türlü linke izin ver
+        ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
